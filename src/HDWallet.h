@@ -44,15 +44,15 @@ class HDWallet {
 
   public:
     /// Initializes a new random HDWallet with the provided strength in bits.  
-    /// Throws on invalid strength.  Not thread safe!
+    /// Throws on invalid strength.
     HDWallet(int strength, const std::string& passphrase);
 
     /// Initializes an HDWallet from a mnemonic.
-    /// Throws on invalid mnemonic.  Not thread safe!
+    /// Throws on invalid mnemonic.
     HDWallet(const std::string& mnemonic, const std::string& passphrase);
 
     /// Initializes an HDWallet from an entropy.
-    /// Throws on invalid data.  Not thread safe!
+    /// Throws on invalid data.
     HDWallet(const Data& entropy, const std::string& passphrase);
 
     HDWallet(const HDWallet& other) = default;

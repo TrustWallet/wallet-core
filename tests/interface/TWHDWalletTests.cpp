@@ -372,7 +372,6 @@ TEST(HDWallet, PublicKeyFromExtended_Negative) {
     }
 }
 
-/* Test disabled temporarily, as HDWallet creation is not thread safe, can produce invalid result which is checked now.
 TEST(HDWallet, MultipleThreads) {
     auto passphrase = STRING("");
 
@@ -398,7 +397,6 @@ TEST(HDWallet, MultipleThreads) {
     th2.join();
     th3.join();
 }
-*/
 
 TEST(HDWallet, GetDerivedKey) {
     auto wallet = WRAP(TWHDWallet, TWHDWalletCreateWithMnemonic(words.get(), passphrase.get()));

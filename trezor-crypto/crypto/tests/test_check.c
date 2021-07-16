@@ -4990,8 +4990,9 @@ START_TEST(test_mnemonic) {
   a = vectors;
   b = vectors + 1;
   c = vectors + 2;
+  char buf[240];
   while (*a && *b && *c) {
-    m = mnemonic_from_data(fromhex(*a), strlen(*a) / 2);
+    m = mnemonic_from_data(fromhex(*a), strlen(*a) / 2, buf, 240);
     ck_assert_str_eq(m, *b);
     mnemonic_to_seed(m, "TREZOR", seed, 0);
     ck_assert_mem_eq(seed, fromhex(*c), strlen(*c) / 2);
@@ -5004,6 +5005,11 @@ START_TEST(test_mnemonic) {
     b += 3;
     c += 3;
   }
+
+  // [wallet-core] negative test: provided buffer invalid (too small or null)
+  ck_assert_int_eq((int)(mnemonic_from_data(fromhex(vectors[0]), strlen(vectors[0]) / 2, buf, 200)), 0);
+  ck_assert_int_eq((int)(mnemonic_from_data(fromhex(vectors[0]), strlen(vectors[0]) / 2, buf, 0)), 0);
+  ck_assert_int_eq((int)(mnemonic_from_data(fromhex(vectors[0]), strlen(vectors[0]) / 2, NULL, 240)), 0);
 }
 END_TEST
 
