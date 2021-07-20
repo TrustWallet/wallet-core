@@ -25,6 +25,7 @@ public:
             TWCoinTypeTomoChain,
             TWCoinTypeSmartChainLegacy,
             TWCoinTypeSmartChain,
+            TWCoinTypeAvalancheCChain,
             TWCoinTypePolygon,
             TWCoinTypeWanchain,
         };

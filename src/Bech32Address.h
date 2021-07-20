@@ -36,7 +36,7 @@ public:
     /// obj_out:  Pass-by-ref, result is initialized here if possible, it can be a derived address type.
     /// hrp: the expected hrp prefix (if missing ("") no prefix check is done).
     /// \returns true if success.
-    static bool decode(const std::string& addr, Bech32Address& obj_out, const std::string& hrp);
+    static bool decode(const std::string& addr, Bech32Address& obj_out, const std::string& hrp, bool pad = false);
 
     /// Initializes an empty address.
     Bech32Address(const std::string& hrp_in) : hrp(std::move(hrp_in)) {}

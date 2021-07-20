@@ -1,0 +1,198 @@
+// Copyright © 2017-2021 Trust Wallet.
+//
+// This file is part of Trust. The full Trust copyright notice, including
+// terms governing use, modification, and redistribution, is contained in the
+// file LICENSE at the root of the source code distribution tree.
+
+syntax = "proto3";
+
+package TW.Avalanche.Proto;
+option java_package = "wallet.core.jni.proto";
+
+message SECP256K1TransferOutput {
+    uint32 type_id = 1;            // 04 bytes
+    uint64 amount = 2;            // 08 bytes
+    uint64 locktime = 3;          // 08 bytes
+    uint32 threshold = 4;         // 04 bytes
+    repeated bytes addresses = 5; // 04 bytes + 20 bytes * len(addresses)
+}
+
+message SECP256K1MintOutput {
+    uint32 type_id = 1;            // 04 bytes
+    uint64 locktime = 2;          // 08 bytes
+    uint32 threshold = 3;         // 04 bytes
+    repeated bytes addresses = 4; // 04 bytes + 20 bytes * len(addresses)
+}
+
+message NFTTransferOutput {
+    uint32 type_id = 1;            // 04 bytes
+    uint32 group_id = 2;          // 04 bytes
+    bytes payload = 3;            // 04 bytes + len(payload)
+    uint64 locktime = 4;           // 08 bytes
+    uint32 threshold = 5;         // 04 bytes
+    repeated bytes addresses = 6; // 04 bytes + 20 bytes * len(addresses)
+}
+
+message NFTMintOutput {
+    uint32 typeID = 1;            // 04 bytes
+    uint32 group_id = 2;          // 04 bytes
+    uint64 locktime = 3;          // 08 bytes
+    uint32 threshold = 4;         // 04 bytes
+    repeated bytes addresses = 5; // 04 bytes + 20 bytes * len(addresses)
+}
+
+message TransactionOutput {
+    oneof output {
+        SECP256K1TransferOutput secp_transfer_output = 1;
+        SECP256K1MintOutput secp_mint_output = 2;
+        NFTTransferOutput nft_transfer_output = 3;
+        NFTMintOutput nft_mint_output = 4;
+    }
+}
+
+message SECP256K1TransferInput {
+    uint32 typeID = 1;                   // 04 bytes
+    uint64 amount = 2;                   // 08 bytes
+    repeated uint32 address_indices = 3; // 04 bytes + 04 bytes * len(address_indices)
+}
+
+message TransactionInput {
+    oneof input {
+        SECP256K1TransferInput secp_transfer_input = 1;
+    }
+}
+
+message SECP256K1MintOperation {
+    uint32 typeID = 1;                   // 4 bytes
+    repeated uint32 address_indices = 2; // 04 bytes + 04 bytes * len(address_indices)
+    SECP256K1MintOutput mint_output = 3;          // size(mint_output)
+    SECP256K1TransferOutput transfer_output = 4;  // size(transfer_output)
+}
+
+message NftMintOpOutput {
+    uint64 locktime = 1;
+    uint32 threshold = 2;
+    repeated bytes addresses = 3;
+}
+
+message NFTMintOp {
+    uint32 typeID = 1;                   // 04 bytes
+    repeated uint32 address_indices = 2; // 04 bytes + 04 bytes * len(address_indices)
+    uint32 group_id = 3;                 // 04 bytes
+    bytes payload = 4;                   // 04 bytes + len(payload)
+    repeated NftMintOpOutput outputs = 5;          // 04 bytes + size(outputs)
+}
+
+message NFTTransferOp {
+    uint32 typeID = 1;                   // 04 bytes
+    repeated uint32 address_indices = 2; // 04 bytes + 04 bytes * len(address_indices)
+    uint32 group_id = 3;                 // 04 bytes
+    bytes payload = 4;                   // 04 bytes + len(payload)
+    uint64 locktime = 5;                 // 08 bytes
+    uint32 threshold = 6;                // 04 bytes
+    repeated bytes addresses = 7;        // 04 bytes + 20 bytes * len(addresses)
+}
+
+message TransferOp {
+    oneof operation {
+        SECP256K1MintOperation secp_mint_op = 1;
+        NFTMintOp nft_mint_op = 2;
+        NFTTransferOp nft_transfer_op = 3;
+    }
+}
+
+message UTXOID {
+    bytes tx_id = 1;       // 32 bytes
+    uint32 utxo_index = 2; // 04 bytes
+}
+
+message TransferableOp {
+    bytes asset_id = 1;           // 32 bytes
+    repeated UTXOID utxo_ids = 2; // 4 + 36 * len(utxo_ids) bytes
+    TransferOp transfer_op = 3;   // size(transfer_op)
+}
+
+message TransferableOutput {
+    bytes asset_id = 1; // 32 bytes
+    TransactionOutput output = 2;  // size(output)
+}
+
+message TransferableInput {
+    bytes tx_id = 1;       // 32 bytes
+    uint32 utxo_index = 2; // 04 bytes
+    bytes asset_id = 3;    // 32 bytes
+    TransactionInput input = 4;       // size(input)
+    repeated bytes spendable_addresses = 5; // not encoded. represented as pubkeys.
+}
+
+message InitialState {
+    uint32 fx_id = 1;                  // 04 bytes
+    repeated TransactionOutput outputs = 2;       // 04 + size(outputs) bytes
+}
+
+message BaseTx {
+    uint32 typeID = 1;           // 04 bytes
+    uint32 network_id = 2;       // 04 bytes
+    bytes blockchain_id = 3;     // 32 bytes
+    repeated TransferableOutput outputs = 4; // 04 bytes + size(outs)
+    repeated TransferableInput inputs = 5;   // 04 bytes + size(ins)
+    bytes memo = 6;              // 04 bytes + size(memo)
+}
+
+message CreateAssetTx {
+    BaseTx base_tx = 1;                       // size(base_tx)
+    string name = 2;                          // 2 bytes + len(name)
+    string symbol = 3;                          // 2 bytes + len(symbol)
+    uint32 denomination = 4;                   // 1 bytes NOTE: this should be a uint8 when encoding to a byte format recognized by the avalanche network, not uint32
+    repeated InitialState initial_states = 5; // 4 bytes + size(initial_states)
+}
+
+message OperationTx {
+    BaseTx base_tx = 1;          // size(base_tx)
+    repeated TransferableOp ops = 2; // 4 bytes + size(ops)
+}
+
+message ImportTx {
+    BaseTx base_tx = 1;          // size(base_tx)
+    bytes source_chain = 2;      // 32 bytes
+    repeated TransferableInput ins = 3; // 4 bytes + size(ins)
+}
+
+message ExportTx {
+    BaseTx base_tx = 1;            // size(base_tx)
+    bytes destination_chain = 2;   // 32 bytes
+    repeated TransferableOutput outs = 3; // 4 bytes + size(outs)
+}
+
+message UnsignedTx {
+    oneof tx {
+        BaseTx base_tx = 1;
+        CreateAssetTx create_asset_tx = 2;
+        OperationTx operation_tx = 3;
+        ImportTx import_tx = 4;
+        ExportTx export_tx = 5;
+    }
+}
+
+message Credential {
+    uint32 typeID = 1;             // 4 bytes
+    repeated bytes signatures = 2; // 4 bytes + 65 bytes * len(signatures)
+}
+
+message SignedTx {
+    uint32 codec_id = 1;                 // 2 bytes NOTE: this should be a uint16 when encoding to a serialization format recognized by the Avalanche network, not 32
+    UnsignedTx unsigned_tx = 2;          // size(unsigned_tx)
+    repeated Credential credentials = 3; // 4 bytes + size(credentials)
+}
+
+message SigningInput {
+    repeated bytes private_keys = 1;
+    
+    UnsignedTx input_tx = 2; 
+}
+
+// Transaction signing output.
+message SigningOutput {
+    // Signed and encoded transaction bytes.
+    bytes encoded = 1;
+}

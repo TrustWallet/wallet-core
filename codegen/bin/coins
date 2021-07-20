@@ -8,6 +8,7 @@ require 'json'
 def self.format_name(n)
   formatted = n
   formatted = formatted.sub(/^([a-z]+)/, &:upcase)
+  formatted = formatted.gsub(/-/, ' ')
   formatted = formatted.gsub(/\s/, '')
   formatted
 end

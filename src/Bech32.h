@@ -35,8 +35,8 @@ std::string encode(const std::string& hrp, const Data& values, ChecksumVariant v
 std::tuple<std::string, Data, ChecksumVariant> decode(const std::string& str);
 
 /// Converts from one power-of-2 number base to another.
-template <int frombits, int tobits, bool pad>
-inline bool convertBits(Data& out, const Data& in) {
+template <int frombits, int tobits>
+inline bool convertBits(Data& out, const Data& in, bool pad) {
     int acc = 0;
     int bits = 0;
     const int maxv = (1 << tobits) - 1;
@@ -50,8 +50,9 @@ inline bool convertBits(Data& out, const Data& in) {
         }
     }
     if (pad) {
-        if (bits)
+        if (bits) {
             out.push_back((acc << (tobits - bits)) & maxv);
+        }
     } else if (bits >= frombits || ((acc << (tobits - bits)) & maxv)) {
         return false;
     }

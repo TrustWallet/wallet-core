@@ -17,6 +17,7 @@ require 'coin_test_gen'
 # Transforms a coin name to a C++ name
 def self.format_name(coin)
     formatted = coin['name']
+    formatted = formatted.gsub(/-/, ' ')
     formatted = formatted.gsub(/\s/, '')
     formatted
 end

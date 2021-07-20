@@ -74,7 +74,7 @@ std::tuple<SegwitAddress, std::string, bool> SegwitAddress::decode(const std::st
 std::string SegwitAddress::string() const {
     Data enc;
     enc.push_back(static_cast<uint8_t>(witnessVersion));
-    Bech32::convertBits<8, 5, true>(enc, witnessProgram);
+    Bech32::convertBits<8, 5>(enc, witnessProgram, true);
     Bech32::ChecksumVariant variant = Bech32::ChecksumVariant::Bech32;
     if (witnessVersion== 0) {
         variant = Bech32::ChecksumVariant::Bech32;
@@ -95,7 +95,7 @@ std::pair<SegwitAddress, bool> SegwitAddress::fromRaw(const std::string& hrp, co
     }
     byte segwitVersion = data[0];
     Data conv;
-    if (!Bech32::convertBits<5, 8, false>(conv, Data(data.begin() + 1, data.end())) ||
+    if (!Bech32::convertBits<5, 8>(conv, Data(data.begin() + 1, data.end()), false) ||
         conv.size() < 2 || conv.size() > 40 || segwitVersion > 16 ||
         (segwitVersion == 0 && conv.size() != 20 && conv.size() != 32)) {
         return resp;

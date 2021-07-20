@@ -32,7 +32,9 @@ class TestCoinType {
         assertEquals(CoinType.TEZOS.value(), 1729)
         assertEquals(CoinType.QTUM.value(), 2301)
         assertEquals(CoinType.NEBULAS.value(), 2718)
-    }
+        assertEquals(CoinType.AVALANCHEXCHAIN.value(), 9000)
+        assertEquals(CoinType.AVALANCHECCHAIN.value(), 10009000)
+   }
 
     @Test
     fun testCoinPurpose() {

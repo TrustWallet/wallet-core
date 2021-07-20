@@ -45,6 +45,7 @@ enum TWBlockchain {
     TWBlockchainFilecoin = 32,
     TWBlockchainElrondNetwork = 33,
     TWBlockchainOasisNetwork = 34,
+    TWBlockchainAvalanche = 35,
 };
 
 TW_EXTERN_C_END

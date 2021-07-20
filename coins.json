@@ -1549,6 +1549,59 @@
     }
   },
   {
+    "id": "avalanchex",
+    "name": "Avalanche X-Chain",
+    "coinId": 9000,
+    "symbol": "AVAX", 
+    "decimals": 9,
+    "hrp": "avax",
+    "blockchain": "Avalanche",
+    "derivationPath": "m/44'/9000'/0'/0/0",
+    "curve": "secp256k1",
+    "publicKeyType": "secp256k1",
+    "publicKeyHasher": "sha256ripemd",
+    "base58Hasher": "sha256d",
+    "xpub": "xpub",
+    "xprv": "xprv",
+    "explorer": {
+      "url": "https://explorer.avax.network",
+      "txPath": "/tx/",
+      "accountPath": "/address/",
+      "sampleTx": "2eLNtbK8bomFKJ6qCGBTuxJvD6LAs6eAXNVK48hGS8MGxGW6B9",
+      "sampleAccount": "X-avax19cp7nwkex3kynxug5s3lskdxhdns2vk7yw4m8h"
+   },
+   "info": {
+      "url": "https://www.avalabs.org/",
+      "client": "https://github.com/ava-labs/avalanchego",
+      "clientPublic": "",
+      "clientDocs": "https://docs.avax.network/"
+   }
+  },
+  {
+    "id": "avalanchec",
+    "name": "Avalanche C-Chain",
+    "coinId": 10009000,
+    "symbol": "AVAX",
+    "decimals": 18,
+    "blockchain": "Ethereum",
+    "derivationPath": "m/44'/60'/0'/0/0",
+    "curve": "secp256k1",
+    "publicKeyType": "secp256k1Extended",
+    "explorer": {
+      "url": "https://cchain.explorer.avax.network",
+      "txPath": "/tx/",
+      "accountPath": "/address/",
+      "sampleTx": "0x9243890b844219accefd8798271052f5a056453ec18984a56e81c92921330d54",
+      "sampleAccount": "0xa664325f36Ec33E66323fe2620AF3f2294b2Ef3A"
+  },
+   "info": {
+    "url": "https://www.avalabs.org/",
+    "client": "https://github.com/ava-labs/avalanchego",
+    "clientPublic": "",
+    "clientDocs": "https://docs.avax.network/"
+   }
+  },
+  {
     "id": "polygon",
     "name": "Polygon",
     "coinId": 966,

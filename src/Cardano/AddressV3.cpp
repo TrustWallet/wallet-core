@@ -29,7 +29,7 @@ bool AddressV3::parseAndCheckV3(const std::string& addr, Discrimination& discrim
         }
         // Bech bits conversion
         Data conv;
-        auto success = Bech32::convertBits<5, 8, false>(conv, std::get<1>(bech));
+        auto success = Bech32::convertBits<5, 8>(conv, std::get<1>(bech), false);
         if (!success) {
             return false;
         }
@@ -210,7 +210,7 @@ string AddressV3::string(const std::string& hrp) const {
     }
     // bech
     Data bech;
-    if (!Bech32::convertBits<8, 5, true>(bech, keys)) {
+    if (!Bech32::convertBits<8, 5>(bech, keys, true)) {
         return "";
     }
     return Bech32::encode(hrp, bech, Bech32::ChecksumVariant::Bech32);
