@@ -55,3 +55,18 @@ std::string getTestTempDir(void);
             google::protobuf::util::MessageToJsonString(input, &json); \
             std::cout<<"dump proto: "<<json<<std::endl; \
         }
+
+/// For tests which should throw.  Wrap code under test in this macro.  
+/// ExceptionMsg is the expected exception message (startsWith match)
+#define EXPECT_EXCEPTION(statement, expExceptionMsg) \
+    try { \
+        statement; \
+        FAIL() << "An exception was expected, but none was thrown"; \
+    } catch (const std::exception& ex) { \
+        const std::string expEx = expExceptionMsg; \
+        const std::string actEx = ex.what(); \
+        const auto actExPrefix = actEx.substr(0, expEx.length()); \
+        EXPECT_EQ(actExPrefix, expEx); \
+    } catch (...) { \
+        FAIL() << "Not the expected exception"; \
+    }

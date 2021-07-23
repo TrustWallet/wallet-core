@@ -5,6 +5,7 @@
 // file LICENSE at the root of the source code distribution tree.
 
 #include "HDWallet.h"
+#include "Mnemonic.h"
 #include "Bitcoin/Address.h"
 #include "Bitcoin/CashAddress.h"
 #include "Bitcoin/SegwitAddress.h"
@@ -14,10 +15,81 @@
 #include "Hash.h"
 #include "Base58.h"
 #include "Coin.h"
+#include "interface/TWTestUtilities.h"
 
 #include <gtest/gtest.h>
 
 namespace TW {
+
+const auto mnemonic1 = "ripple scissors kick mammal hire column oak again sun offer wealth tomorrow wagon turn fatal";
+const auto passphrase = "passphrase";
+
+TEST(HDWallet, generate) {
+    {
+        HDWallet wallet = HDWallet(128, passphrase);
+        EXPECT_TRUE(Mnemonic::isValid(wallet.mnemonic));
+        EXPECT_EQ(wallet.passphrase, passphrase);
+        EXPECT_EQ(wallet.entropy.size(), 16);
+    }
+    {
+        HDWallet wallet = HDWallet(256, passphrase);
+        EXPECT_TRUE(Mnemonic::isValid(wallet.mnemonic));
+        EXPECT_EQ(wallet.passphrase, passphrase);
+        EXPECT_EQ(wallet.entropy.size(), 33);
+    }
+}
+
+TEST(HDWallet, generateInvalid) {
+    EXPECT_EXCEPTION(HDWallet(64, passphrase), "Invalid strength");
+    EXPECT_EXCEPTION(HDWallet(129, passphrase), "Invalid strength");
+    EXPECT_EXCEPTION(HDWallet(512, passphrase), "Invalid strength");
+}
+
+TEST(HDWallet, createFromMnemonic) {
+    {
+        HDWallet wallet = HDWallet(mnemonic1, passphrase);
+        EXPECT_EQ(wallet.mnemonic, mnemonic1);
+        EXPECT_EQ(wallet.passphrase, passphrase);
+        EXPECT_EQ(hex(wallet.entropy), "ba5821e8c356c05ba5f025d9532fe0f21f65d594");
+        EXPECT_EQ(hex(wallet.seed), "143cd5fc27ae46eb423efebc41610473f5e24a80f2ca2e2fa7bf167e537f58f4c68310ae487fce82e25bad29bab2530cf77fd724a5ebfc05a45872773d7ee2d6");
+    }
+    {   // empty passphrase
+        HDWallet wallet = HDWallet(mnemonic1, "");
+        EXPECT_EQ(wallet.mnemonic, mnemonic1);
+        EXPECT_EQ(wallet.passphrase, "");
+        EXPECT_EQ(hex(wallet.entropy), "ba5821e8c356c05ba5f025d9532fe0f21f65d594");
+        EXPECT_EQ(hex(wallet.seed), "354c22aedb9a37407adc61f657a6f00d10ed125efa360215f36c6919abd94d6dbc193a5f9c495e21ee74118661e327e84a5f5f11fa373ec33b80897d4697557d");
+    }
+}
+
+TEST(HDWallet, createFromMnemonicInvalid) {
+    EXPECT_EXCEPTION(HDWallet("THIS IS AN INVALID MNEMONIC", passphrase), "Invalid mnemonic");
+    EXPECT_EXCEPTION(HDWallet("", passphrase), "Invalid mnemonic");
+}
+
+TEST(HDWallet, createFromEntropy) {
+    {
+        HDWallet wallet = HDWallet(parse_hex("ba5821e8c356c05ba5f025d9532fe0f21f65d594"), passphrase);
+        EXPECT_EQ(wallet.mnemonic, mnemonic1);
+    }
+}
+
+TEST(HDWallet, createFromEntropyInvalid) {
+    EXPECT_EXCEPTION(HDWallet(parse_hex(""), passphrase), "Invalid mnemonic data");
+    EXPECT_EXCEPTION(HDWallet(parse_hex("123456"), passphrase), "Invalid mnemonic data");
+}
+
+TEST(HDWallet, recreateFromEntropy) {
+    {
+        HDWallet wallet1 = HDWallet(mnemonic1, passphrase);
+        EXPECT_EQ(wallet1.mnemonic, mnemonic1);
+        EXPECT_EQ(hex(wallet1.entropy), "ba5821e8c356c05ba5f025d9532fe0f21f65d594");
+        HDWallet wallet2 = HDWallet(wallet1.entropy, passphrase);
+        EXPECT_EQ(wallet2.mnemonic, wallet1.mnemonic);
+        EXPECT_EQ(wallet2.entropy, wallet1.entropy);
+        EXPECT_EQ(wallet2.seed, wallet1.seed);
+    }
+}
 
 TEST(HDWallet, privateKeyFromXPRV) {
     const std::string xprv = "xprv9yqEgpMG2KCjvotCxaiMkzmKJpDXz2xZi3yUe4XsURvo9DUbPySW1qRbdeDLiSxZt88hESHUhm2AAe2EqfWM9ucdQzH3xv1HoKoLDqHMK9n";

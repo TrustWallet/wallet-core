@@ -10,7 +10,7 @@ import WalletCore
 class CoinAddressDerivationTests: XCTestCase {
 
     func testDerive() {
-        let wallet = HDWallet(mnemonic: "shoot island position soft burden budget tooth cruel issue economy destroy above", passphrase: "")
+        let wallet = HDWallet(mnemonic: "shoot island position soft burden budget tooth cruel issue economy destroy above", passphrase: "")!
 
         for _ in 0..<4 {
             for coin in CoinType.allCases {

@@ -13,6 +13,10 @@ namespace TW {
 /// BIP39 Mnemonic Sentence handling.
 class Mnemonic {
 public:
+    static constexpr size_t MaxWords = 24;
+    static constexpr size_t MinWords = 12;
+
+public:
     /// Determines whether a mnemonic phrase is valid.
     // E.g. for a valid mnemonic: "credit expect life fade cover suit response wash pear what skull force"
     static bool isValid(const std::string& mnemonic);

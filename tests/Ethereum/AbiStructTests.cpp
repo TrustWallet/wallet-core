@@ -9,6 +9,7 @@
 #include "Ethereum/Signer.h"
 #include <HexCoding.h>
 #include <PrivateKey.h>
+#include "../interface/TWTestUtilities.h"
 
 #include <fstream>
 #include <gtest/gtest.h>
@@ -430,19 +431,6 @@ TEST(EthereumAbiStruct, encodeTypeCow1) {
 
     EXPECT_EQ(hex(msgPersonCow1.hashStruct()), "fc71e5fa27ff56c350aa531bc129ebdf613b772b6604664f5d8dbe21b85eb0c8");
 }
-
-#define EXPECT_EXCEPTION(statement, exceptionMsg) \
-    try { \
-        statement; \
-        FAIL() << "No exception"; \
-    } catch (const std::exception& ex) { \
-        const std::string expEx = exceptionMsg; \
-        const std::string actEx = ex.what(); \
-        const auto actExPrefix = actEx.substr(0, expEx.length()); \
-        EXPECT_EQ(actExPrefix, expEx); \
-    } catch (...) { \
-        FAIL() << "Not the expected exception"; \
-    }
 
 TEST(EthereumAbiStruct, hashStructJson) {
     {

@@ -13,7 +13,7 @@ class ViewController: NSViewController {
         super.viewDidLoad()
 
         // 'Import' a wallet
-        let wallet = HDWallet(mnemonic: "ripple scissors kick mammal hire column oak again sun offer wealth tomorrow wagon turn fatal", passphrase: "")
+        let wallet = HDWallet(mnemonic: "ripple scissors kick mammal hire column oak again sun offer wealth tomorrow wagon turn fatal", passphrase: "")!
         print("Mnemonic: ", wallet.mnemonic)
 
         // Ethereum example

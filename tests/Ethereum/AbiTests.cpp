@@ -6,6 +6,7 @@
 
 #include "Ethereum/ABI.h"
 #include "HexCoding.h"
+#include "../interface/TWTestUtilities.h"
 
 #include <gtest/gtest.h>
 
@@ -1137,16 +1138,6 @@ TEST(EthereumAbi, DecodeFunctionContractMulticall) {
     EXPECT_TRUE(res);
     EXPECT_EQ(4 + 29 * 32, offset);
 }
-
-#define EXPECT_EXCEPTION(statement, exceptionMsg) \
-    try { \
-        statement; \
-        FAIL() << "No exception"; \
-    } catch (const std::exception& ex) { \
-        EXPECT_EQ(std::string(ex.what()), exceptionMsg); \
-    } catch (...) { \
-        FAIL() << "Not the expected exception"; \
-    }
 
 TEST(EthereumAbi, ParamFactoryMake) {
     {

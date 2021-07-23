@@ -25,7 +25,7 @@ func main() {
 	defer C.TWStringDelete(str)
 	defer C.TWStringDelete(emtpy)
 
-	fmt.Println("==> mnemonic is valid: ", C.TWHDWalletIsValid(str))
+	fmt.Println("==> mnemonic is valid: ", C.TWMnemonicIsValid(str))
 
 	wallet := C.TWHDWalletCreateWithMnemonic(str, emtpy)
 	defer C.TWHDWalletDelete(wallet)

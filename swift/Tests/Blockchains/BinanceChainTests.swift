@@ -19,7 +19,7 @@ class BinanceChainTests: XCTestCase {
     }
 
     func testBinanceMainnet() {
-        let wallet = HDWallet(mnemonic: "rabbit tilt arm protect banner ill produce vendor april bike much identify pond upset front easily glass gallery address hair priority focus forest angle", passphrase: "")
+        let wallet = HDWallet(mnemonic: "rabbit tilt arm protect banner ill produce vendor april bike much identify pond upset front easily glass gallery address hair priority focus forest angle", passphrase: "")!
         let key = wallet.getKeyForCoin(coin: .binance)
         let address = CoinType.binance.deriveAddress(privateKey: key)
 

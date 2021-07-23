@@ -223,6 +223,7 @@ TEST(StoredKey, LoadNonexistent) {
 
 TEST(StoredKey, LoadLegacyPrivateKey) {
     const auto key = StoredKey::load(TESTS_ROOT + "/Keystore/Data/legacy-private-key.json");
+    EXPECT_EQ(key.type, StoredKeyType::privateKey);
     EXPECT_EQ(key.id, "3051ca7d-3d36-4a4a-acc2-09e9083732b0");
     EXPECT_EQ(key.accounts[0].coin, TWCoinTypeEthereum);
     EXPECT_EQ(hex(key.payload.decrypt(TW::data("testpassword"))), "7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d");
@@ -230,6 +231,7 @@ TEST(StoredKey, LoadLegacyPrivateKey) {
 
 TEST(StoredKey, LoadLivepeerKey) {
     const auto key = StoredKey::load(TESTS_ROOT + "/Keystore/Data/livepeer.json");
+    EXPECT_EQ(key.type, StoredKeyType::privateKey);
     EXPECT_EQ(key.id, "70ea3601-ee21-4e94-a7e4-66255a987d22");
     EXPECT_EQ(key.accounts[0].coin, TWCoinTypeEthereum);
     EXPECT_EQ(hex(key.payload.decrypt(TW::data("Radchenko"))), "09b4379d9a41a71d94ee36357bccb4d77b45e7fd9307e2c0f673dd54c0558c73");
@@ -237,6 +239,7 @@ TEST(StoredKey, LoadLivepeerKey) {
 
 TEST(StoredKey, LoadPBKDF2Key) {
     const auto key = StoredKey::load(TESTS_ROOT + "/Keystore/Data/pbkdf2.json");
+    EXPECT_EQ(key.type, StoredKeyType::privateKey);
     EXPECT_EQ(key.id, "3198bc9c-6672-5ab3-d995-4942343ae5b6");
 
     const auto& payload = key.payload;
@@ -250,6 +253,7 @@ TEST(StoredKey, LoadPBKDF2Key) {
 
 TEST(StoredKey, LoadLegacyMnemonic) {
     const auto key = StoredKey::load(TESTS_ROOT + "/Keystore/Data/legacy-mnemonic.json");
+    EXPECT_EQ(key.type, StoredKeyType::mnemonicPhrase);
     EXPECT_EQ(key.id, "629aad29-0b22-488e-a0e7-b4219d4f311c");
 
     const auto data = key.payload.decrypt(password);
@@ -267,6 +271,7 @@ TEST(StoredKey, LoadLegacyMnemonic) {
 
 TEST(StoredKey, LoadFromWeb3j) {
     const auto key = StoredKey::load(TESTS_ROOT + "/Keystore/Data/web3j.json");
+    EXPECT_EQ(key.type, StoredKeyType::privateKey);
     EXPECT_EQ(key.id, "86066d8c-8dba-4d81-afd4-934e2a2b72a2");
     const auto password = parse_hex("2d6eefbfbd4622efbfbdefbfbd516718efbfbdefbfbdefbfbdefbfbd59efbfbd30efbfbdefbfbd3a4348efbfbd2aefbfbdefbfbd49efbfbd27efbfbd0638efbfbdefbfbdefbfbd4cefbfbd6befbfbdefbfbd6defbfbdefbfbd63efbfbd5aefbfbd61262b70efbfbdefbfbdefbfbdefbfbdefbfbdc7aa373163417cefbfbdefbfbdefbfbd44efbfbdefbfbd1d10efbfbdefbfbdefbfbd61dc9e5b124befbfbd11efbfbdefbfbd2fefbfbdefbfbd3d7c574868efbfbdefbfbdefbfbd37043b7b5c1a436471592f02efbfbd18efbfbdefbfbd2befbfbdefbfbd7218efbfbd6a68efbfbdcb8e5f3328773ec48174efbfbd67efbfbdefbfbdefbfbdefbfbdefbfbd2a31efbfbd7f60efbfbdd884efbfbd57efbfbd25efbfbd590459efbfbd37efbfbd2bdca20fefbfbdefbfbdefbfbdefbfbd39450113efbfbdefbfbdefbfbd454671efbfbdefbfbdd49fefbfbd47efbfbdefbfbdefbfbdefbfbd00efbfbdefbfbdefbfbdefbfbd05203f4c17712defbfbd7bd1bbdc967902efbfbdc98a77efbfbd707a36efbfbd12efbfbdefbfbd57c78cefbfbdefbfbdefbfbd10efbfbdefbfbdefbfbde1a1bb08efbfbdefbfbd26efbfbdefbfbd58efbfbdefbfbdc4b1efbfbd295fefbfbd0eefbfbdefbfbdefbfbd0e6eefbfbd");
     const auto data = key.payload.decrypt(password);
@@ -276,6 +281,7 @@ TEST(StoredKey, LoadFromWeb3j) {
 TEST(StoredKey, ReadWallet) {
     const auto key = StoredKey::load(TESTS_ROOT + "/Keystore/Data/key.json");
 
+    EXPECT_EQ(key.type, StoredKeyType::privateKey);
     EXPECT_EQ(key.id, "e13b209c-3b2f-4327-bab0-3bef2e51630d");
     EXPECT_EQ(key.name, "Test Account");
 
@@ -359,10 +365,16 @@ TEST(StoredKey, RemoveAccount) {
 
 TEST(StoredKey, MissingAddress) {
     auto key = StoredKey::load(TESTS_ROOT + "/Keystore/Data/missing-address.json");
+    EXPECT_EQ(key.type, StoredKeyType::mnemonicPhrase);
+
+    const auto wallet = key.wallet(password);
+    EXPECT_EQ(wallet.mnemonic, "ripple scissors kick mammal hire column oak again sun offer wealth tomorrow wagon turn fatal");
+    EXPECT_TRUE(Mnemonic::isValid(wallet.mnemonic));
+
     key.fixAddresses(password);
 
-    EXPECT_EQ(key.account(TWCoinTypeEthereum, nullptr)->address, "0x04De84ec355BAe81b51cD53Fdc8AA30A61872C95");
-    EXPECT_EQ(key.account(coinTypeBc, nullptr)->address, "bc1qe938ncm8fhdqg27xmxd7lq02jz9xh0x48r22lc");
+    EXPECT_EQ(key.account(TWCoinTypeEthereum, nullptr)->address, "0xA3Dcd899C0f3832DFDFed9479a9d828c6A4EB2A7");
+    EXPECT_EQ(key.account(coinTypeBc, nullptr)->address, "bc1qpsp72plnsqe6e2dvtsetxtww2cz36ztmfxghpd");
 }
 
 TEST(StoredKey, EtherWalletAddressNo0x) {

@@ -33,7 +33,7 @@ class GroestlcoinTests: XCTestCase {
     }
 
     func testExtendedKeys() {
-        let wallet = HDWallet(mnemonic: "all all all all all all all all all all all all", passphrase: "")
+        let wallet = HDWallet(mnemonic: "all all all all all all all all all all all all", passphrase: "")!
 
         // .bip44
         let xprv = wallet.getExtendedPrivateKey(purpose: .bip44, coin: .groestlcoin, version: .xprv)

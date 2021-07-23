@@ -21,21 +21,22 @@ TW_EXTERN_C_BEGIN
 TW_EXPORT_CLASS
 struct TWHDWallet;
 
-/// Deprecated; use TWMnemonicIsValid().  Determines if a mnemonic phrase is valid.
-TW_EXPORT_STATIC_METHOD
-bool TWHDWalletIsValid(TWString *_Nonnull mnemonic);
+/// TWHDWalletIsValid has been deprecated; use TWMnemonicIsValid().
 
-/// Creates a new random HDWallet with the provided strength in bits.  Returned object needs to be deleted.
+/// Creates a new HDWallet with a new random mnemonic with the provided strength in bits.
+/// Null is returned on invalid strength.  Method not thread safe!  Returned object needs to be deleted.
 TW_EXPORT_STATIC_METHOD
-struct TWHDWallet *_Nonnull TWHDWalletCreate(int strength, TWString *_Nonnull passphrase);
+struct TWHDWallet *_Nullable TWHDWalletCreate(int strength, TWString *_Nonnull passphrase);
 
-/// Creates an HDWallet from a mnemonic seed.  Returned object needs to be deleted.
+/// Creates an HDWallet from a mnemonic (aka. recovery phrase).
+/// Null is returned on invalid mnemonic.  Method not thread safe!  Returned object needs to be deleted.
 TW_EXPORT_STATIC_METHOD
-struct TWHDWallet *_Nonnull TWHDWalletCreateWithMnemonic(TWString *_Nonnull mnemonic, TWString *_Nonnull passphrase);
+struct TWHDWallet *_Nullable TWHDWalletCreateWithMnemonic(TWString *_Nonnull mnemonic, TWString *_Nonnull passphrase);
 
-/// Creates an HDWallet from a seed.  Returned object needs to be deleted.
+/// Creates an HDWallet from entropy (corresponding to a mnemonic).
+/// Null is returned on invalid input.  Method not thread safe!  Returned object needs to be deleted.
 TW_EXPORT_STATIC_METHOD
-struct TWHDWallet *_Nonnull TWHDWalletCreateWithData(TWData *_Nonnull data, TWString *_Nonnull passphrase);
+struct TWHDWallet *_Nullable TWHDWalletCreateWithEntropy(TWData *_Nonnull entropy, TWString *_Nonnull passphrase);
 
 /// Deletes a wallet.
 TW_EXPORT_METHOD
@@ -48,6 +49,10 @@ TWData *_Nonnull TWHDWalletSeed(struct TWHDWallet *_Nonnull wallet);
 // Wallet Mnemonic
 TW_EXPORT_PROPERTY
 TWString *_Nonnull TWHDWalletMnemonic(struct TWHDWallet *_Nonnull wallet);
+
+// Wallet entropy
+TW_EXPORT_PROPERTY
+TWData *_Nonnull TWHDWalletEntropy(struct TWHDWallet *_Nonnull wallet);
 
 /// Returns master key.  Returned object needs to be deleted.
 TW_EXPORT_METHOD

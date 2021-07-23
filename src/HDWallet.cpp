@@ -11,6 +11,7 @@
 #include "Bitcoin/SegwitAddress.h"
 #include "Bitcoin/CashAddress.h"
 #include "Coin.h"
+#include "Mnemonic.h"
 
 #include <TrustWalletCore/TWHRP.h>
 #include <TrezorCrypto/bip32.h>
@@ -33,27 +34,34 @@ const char* curveName(TWCurve curve);
 } // namespace
 
 HDWallet::HDWallet(int strength, const std::string& passphrase)
-    : seed(), mnemonic(), passphrase(passphrase) {
+    : passphrase(passphrase) {
     const char* mnemonic_chars = mnemonic_generate(strength);
-    mnemonic_to_seed(mnemonic_chars, passphrase.c_str(), seed.data(), nullptr);
+    if (mnemonic_chars == nullptr) {
+        throw std::invalid_argument("Invalid strength");
+    }
     mnemonic = mnemonic_chars;
-    updateEntropy();
+    assert(Mnemonic::isValid(mnemonic));
+    updateSeedAndEntropy();
 }
 
 HDWallet::HDWallet(const std::string& mnemonic, const std::string& passphrase)
-    : seed(), mnemonic(mnemonic), passphrase(passphrase) {
-    mnemonic_to_seed(mnemonic.c_str(), passphrase.c_str(), seed.data(), nullptr);
-    updateEntropy();
+    : mnemonic(mnemonic), passphrase(passphrase) {
+    if (!Mnemonic::isValid(mnemonic)) {
+        throw std::invalid_argument("Invalid mnemonic");
+    }
+    assert(Mnemonic::isValid(mnemonic));
+    updateSeedAndEntropy();
 }
 
-HDWallet::HDWallet(const Data& data, const std::string& passphrase)
-    : seed(), mnemonic(), passphrase(passphrase) {
-    const char* mnemonic_chars = mnemonic_from_data(data.data(), static_cast<int>(data.size()));
-    if (mnemonic_chars) {
-        mnemonic_to_seed(mnemonic_chars, passphrase.c_str(), seed.data(), nullptr);
-        mnemonic = mnemonic_chars;
-        updateEntropy();
+HDWallet::HDWallet(const Data& entropy, const std::string& passphrase)
+    : passphrase(passphrase) {
+    const char* mnemonic_chars = mnemonic_from_data(entropy.data(), static_cast<int>(entropy.size()));
+    if (mnemonic_chars == nullptr) {
+        throw std::invalid_argument("Invalid mnemonic data");
     }
+    mnemonic = mnemonic_chars;
+    assert(Mnemonic::isValid(mnemonic));
+    updateSeedAndEntropy();
 }
 
 HDWallet::~HDWallet() {
@@ -62,12 +70,18 @@ HDWallet::~HDWallet() {
     std::fill(passphrase.begin(), passphrase.end(), 0);
 }
 
-void HDWallet::updateEntropy() {
-    // generate entropy (from mnemonic)
-    Data entropyRaw(32 + 1);
-    auto entropyBits = mnemonic_to_bits(mnemonic.c_str(), entropyRaw.data());
+void HDWallet::updateSeedAndEntropy() {
+    // generate seed from mnemonic
+    // it is assumed that mnemonic is valid, enforced before calling
+    mnemonic_to_seed(mnemonic.c_str(), passphrase.c_str(), seed.data(), nullptr);
+
+    // generate entropy from mnemonic
+    Data entropyRaw((Mnemonic::MaxWords * 11) / 8);
+    auto entropyBytes = mnemonic_to_bits(mnemonic.c_str(), entropyRaw.data()) / 8;
+    assert(entropyBytes <= ((Mnemonic::MaxWords * 11) / 8) && entropyBytes >= ((Mnemonic::MinWords * 11) / 8));
     // copy to truncate
-    entropy = data(entropyRaw.data(), entropyBits / 8);
+    entropy = data(entropyRaw.data(), entropyBytes);
+    assert(entropy.size() > 10);
 }
 
 PrivateKey HDWallet::getMasterKey(TWCurve curve) const {
@@ -153,12 +167,13 @@ std::optional<PublicKey> HDWallet::getPublicKeyFromExtended(const std::string& e
     // These public key type are not applicable.  Handled above, as node.curve->params is null
     assert(curve != TWCurveED25519 && curve != TWCurveED25519Blake2bNano && curve != TWCurveED25519Extended && curve != TWCurveCurve25519);
     TWPublicKeyType keyType = TW::publicKeyType(coin);
-    if (curve == TWCurveSECP256k1 && keyType == TWPublicKeyTypeSECP256k1) {
+    if (curve == TWCurveSECP256k1) {
+        assert(keyType == TWPublicKeyTypeSECP256k1);
         return PublicKey(Data(node.public_key, node.public_key + 33), TWPublicKeyTypeSECP256k1);
-    } else if (curve == TWCurveNIST256p1 && keyType == TWPublicKeyTypeNIST256p1) {
-        return PublicKey(Data(node.public_key, node.public_key + 33), TWPublicKeyTypeNIST256p1);
     }
-    return {};
+    assert(curve == TWCurveNIST256p1);
+    assert(keyType == TWPublicKeyTypeNIST256p1);
+    return PublicKey(Data(node.public_key, node.public_key + 33), TWPublicKeyTypeNIST256p1);
 }
 
 std::optional<PrivateKey> HDWallet::getPrivateKeyFromExtended(const std::string& extended, TWCoinType coin, const DerivationPath& path) {
