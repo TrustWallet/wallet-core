@@ -285,6 +285,25 @@ TEST(BitcoinScript, MatchMultiSig) {
     EXPECT_EQ(hex(keys[2]), "03c9f4836b9a4f77fc0d81f7bcb01b7f1b35916864b9476c241ce9fc198bd25432");
 }
 
+TEST(BitcoinScript, OpReturn) {
+    {
+        Data data = parse_hex("00010203");
+        Script script = Script::buildOpReturnScript(data);
+        EXPECT_EQ(hex(script.bytes), "6a0400010203");
+    }
+    {
+        Data data = parse_hex("535741503a54484f522e52554e453a74686f72317470657263616d6b6b7865633071306a6b366c74646e6c7176737732396775617038776d636c3a");
+        Script script = Script::buildOpReturnScript(data);
+        EXPECT_EQ(hex(script.bytes), "6a3b535741503a54484f522e52554e453a74686f72317470657263616d6b6b7865633071306a6b366c74646e6c7176737732396775617038776d636c3a");
+    }
+    {
+        // too long, truncated
+        Data data = Data(70);
+        Script script = Script::buildOpReturnScript(data);
+        EXPECT_EQ(hex(script.bytes), "6a4000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+    }
+}
+
 TEST(BitcoinTransactionSigner, PushAllEmpty) {
     {
         std::vector<Data> input = {};

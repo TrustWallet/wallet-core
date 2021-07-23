@@ -247,6 +247,19 @@ Script Script::buildPayToWitnessScriptHash(const Data& scriptHash) {
     return Script::buildPayToWitnessProgram(scriptHash);
 }
 
+Script Script::buildOpReturnScript(const Data& data) {
+    const int MaxOpReturnLength = 64;
+    Script script;
+    script.bytes.push_back(OP_RETURN);
+    size_t size = data.size();
+    if (size > MaxOpReturnLength) {
+        size = MaxOpReturnLength;
+    }
+    script.bytes.push_back(static_cast<byte>(size));
+    script.bytes.insert(script.bytes.end(), data.begin(), data.begin() + size);
+    return script;
+}
+
 void Script::encode(Data& data) const {
     encodeVarInt(bytes.size(), data);
     std::copy(std::begin(bytes), std::end(bytes), std::back_inserter(data));

@@ -10,6 +10,7 @@
 #include "Bitcoin/TransactionPlan.h"
 #include "Bitcoin/TransactionBuilder.h"
 #include "Bitcoin/FeeCalculator.h"
+#include "HexCoding.h"
 #include "proto/Bitcoin.pb.h"
 #include <TrustWalletCore/TWCoinType.h>
 
@@ -568,4 +569,39 @@ TEST(TransactionPlan, LotsofUtxosMax) {
     EXPECT_EQ(filteredValues.size(), 986);
     EXPECT_EQ(filteredValueSum, 50'039'500);
     EXPECT_TRUE(verifyPlan(txPlan, filteredValues, 48'579'780, 1'459'720));
+}
+
+TEST(TransactionPlan, OpReturn) {
+    auto ownAddress = "bc1q7s0a2l4aguksehx8hf93hs9yggl6njxds6m02g";
+    auto toAddress = "bc1qxu5a8gtnjxw3xwdlmr2gl9d76h9fysu3zl656e";
+    auto utxoAmount = 342101;
+    auto toAmount = 300000;
+    int byteFee = 126;
+    Data memo = data("SWAP:THOR.RUNE:thor1tpercamkkxec0q0jk6ltdnlqvsw29guap8wmcl:");
+
+    auto signingInput = Proto::SigningInput();
+    signingInput.set_hash_type(TWBitcoinSigHashTypeAll);
+    signingInput.set_amount(toAmount);
+    signingInput.set_byte_fee(byteFee);
+    signingInput.set_to_address(toAddress);
+    signingInput.set_change_address(ownAddress);
+    signingInput.set_output_op_return(memo.data(), memo.size());
+
+    auto& utxo = *signingInput.add_utxo();
+    auto utxoHash = parse_hex("30b82960291a39de3664ec4c844a815e3e680e29b4d3a919e450f0c119cf4e35");
+    std::reverse(utxoHash.begin(), utxoHash.end());
+    utxo.mutable_out_point()->set_hash(utxoHash.data(), utxoHash.size());
+    utxo.mutable_out_point()->set_index(1);
+    utxo.mutable_out_point()->set_sequence(UINT32_MAX);
+    utxo.set_amount(utxoAmount);
+
+    auto txPlan = TransactionBuilder::plan(signingInput);
+
+    EXPECT_TRUE(verifyPlan(txPlan, {342101}, 300000, 205 * byteFee));
+    EXPECT_EQ(txPlan.outputOpReturn.size(), 59);
+    EXPECT_EQ(hex(txPlan.outputOpReturn), "535741503a54484f522e52554e453a74686f72317470657263616d6b6b7865633071306a6b366c74646e6c7176737732396775617038776d636c3a");
+
+    auto& feeCalculator = getFeeCalculator(TWCoinTypeBitcoin);
+    EXPECT_EQ(feeCalculator.calculate(1, 2, byteFee), 174 * byteFee);
+    EXPECT_EQ(feeCalculator.calculate(1, 3, byteFee), 205 * byteFee);
 }

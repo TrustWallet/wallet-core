@@ -100,6 +100,9 @@ message SigningInput {
 
     // Optional transaction plan
     TransactionPlan plan = 11;
+
+    // Optional zero-amount, OP_RETURN output
+    bytes output_op_return = 12;
 }
 
 // Describes a preliminary transaction plan.
@@ -124,6 +127,9 @@ message TransactionPlan {
 
     // Optional error
     Common.Proto.SigningError error = 7;
+
+    // Optional zero-amount, OP_RETURN output
+    bytes output_op_return = 8;
 };
 
 // Transaction signing output.

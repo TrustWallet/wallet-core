@@ -84,6 +84,9 @@ class Script {
     /// Builds a pay-to-witness-script-hash (P2WSH) script from a script hash.
     static Script buildPayToWitnessScriptHash(const Data& scriptHash);
 
+    /// Builds an OP_RETURN script with given data
+    static Script buildOpReturnScript(const Data& data);
+
     /// Builds a appropriate lock script for the given
     /// address.
     static Script lockScriptForAddress(const std::string& address, enum TWCoinType coin);

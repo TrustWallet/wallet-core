@@ -28,10 +28,14 @@ Proto::SigningOutput SignTest() {
 
     auto& order = *input.mutable_send_order();
 
-    // bnb1grpf0955h0ykzq3ar5nmum7y6gdfl6lxfn46h2
-    auto fromKeyhash = parse_hex("40c2979694bbc961023d1d27be6fc4d21a9febe6");
-    // bnb1hlly02l6ahjsgxw9wlcswnlwdhg4xhx38yxpd5
-    auto toKeyhash = parse_hex("bffe47abfaede50419c577f1074fee6dd1535cd1");
+    Address fromAddress;
+    EXPECT_TRUE(Address::decode("bnb1grpf0955h0ykzq3ar5nmum7y6gdfl6lxfn46h2", fromAddress));
+    EXPECT_EQ(hex(fromAddress.getKeyHash()), "40c2979694bbc961023d1d27be6fc4d21a9febe6");
+    auto fromKeyhash = fromAddress.getKeyHash();
+    Address toAddress;
+    EXPECT_TRUE(Address::decode("bnb1hlly02l6ahjsgxw9wlcswnlwdhg4xhx38yxpd5", toAddress));
+    EXPECT_EQ(hex(toAddress.getKeyHash()), "bffe47abfaede50419c577f1074fee6dd1535cd1");
+    auto toKeyhash = toAddress.getKeyHash();
 
     {
         auto input = order.add_inputs();

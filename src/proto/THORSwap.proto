@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package TW.THORSwap.Proto;
+option java_package = "wallet.core.jni.proto";
+
+import "Bitcoin.proto";
+import "Ethereum.proto";
+import "Binance.proto";
+
+// Supported blockchains
+enum Chain {
+        THOR = 0;
+        BTC = 1;
+        ETH = 2;
+        BNB = 3;
+}
+
+// Represents an asset.  Examples: BNB.BNB, RUNE.RUNE, BNB.RUNE-67C
+message Asset {
+    Chain chain = 1;
+    string symbol = 2;
+    string token_id = 3;
+}
+
+// Input for a swap between source and destination chains; for creating a TX on the source chain.
+message SwapInput {
+    // Sender address (on the source chain)
+    string from_address = 1;
+
+    // Destination chain/asset
+    Asset to_asset = 2;
+
+    // Destination address (on the destination chain)
+    string to_address = 3;
+
+    // Vault address.  Address of the vault, on the source network, must match the pair
+    string vault_address = 4;
+
+    // Amount, as string, in the native asset of the source chain
+    string amount = 5;
+
+    // Private key, used for deriving from address and for signing
+    bytes private_key = 6;
+}
+
+message SwapOutput {
+    Chain from_chain = 1;
+    Chain to_chain = 2;
+
+    oneof signing_input_oneof {
+        Bitcoin.Proto.SigningInput bitcoin = 3;
+        Ethereum.Proto.SigningInput ethereum = 4;
+        Binance.Proto.SigningInput binance = 5;
+    }
+}

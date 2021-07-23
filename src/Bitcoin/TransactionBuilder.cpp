@@ -62,12 +62,20 @@ int64_t estimateSegwitFee(const FeeCalculator& feeCalculator, const TransactionP
     return fee;
 }
 
-TransactionPlan TransactionBuilder::plan(const Bitcoin::Proto::SigningInput& input) {
-    auto plan = TransactionPlan();
+int extraOutputCount(const Bitcoin::Proto::SigningInput& input) {
+    int count = int(input.output_op_return().length() > 0);
+    return count;
+}
 
+TransactionPlan TransactionBuilder::plan(const Bitcoin::Proto::SigningInput& input) {
     const auto& feeCalculator = getFeeCalculator(static_cast<TWCoinType>(input.coin_type()));
     auto unspentSelector = UnspentSelector(feeCalculator);
     bool maxAmount = input.use_max_amount();
+
+    auto plan = TransactionPlan();
+    if (input.output_op_return().length() > 0) {
+        plan.outputOpReturn = data(input.output_op_return());
+    }
 
     if (input.amount() == 0 && !maxAmount) {
         plan.error = Common::Proto::Error_zero_amount_requested;
@@ -83,12 +91,13 @@ TransactionPlan TransactionBuilder::plan(const Bitcoin::Proto::SigningInput& inp
             maxAmount = true;
         }
 
-        auto output_size = 2;
+        auto extraOutputs = extraOutputCount(input);
+        auto output_size = 2 + extraOutputs;
         if (!maxAmount) {
-            output_size = 2; // output + change
+            output_size = 2 + extraOutputs; // output + change
             plan.utxos = unspentSelector.select(input.utxo(), plan.amount, input.byte_fee(), output_size);
         } else {
-            output_size = 1; // no change
+            output_size = 1 + extraOutputs; // output, no change
             plan.utxos = unspentSelector.selectMaxAmount(input.utxo(), input.byte_fee());
         }
 
