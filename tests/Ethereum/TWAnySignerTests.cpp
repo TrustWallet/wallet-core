@@ -309,3 +309,170 @@ TEST(TWAnySignerEthereum, PlanNotSupported) {
     auto outputTWData = WRAPD(TWAnySignerPlan(inputTWData.get(), TWCoinTypeEthereum));
     EXPECT_EQ(TWDataSize(outputTWData.get()), 0);
 }
+
+TEST(TWAnySignerEthereum, SignERC1559Transfer_1442) {
+    auto chainId = store(uint256_t(3));
+    auto nonce = store(uint256_t(6));
+    auto gasLimit = store(uint256_t(21100));
+    auto maxInclusionFeePerGas = store(uint256_t(2000000000));
+    auto maxFeePerGas = store(uint256_t(3000000000));
+    auto toAddress = "0xB9F5771C27664bF2282D98E09D7F50cEc7cB01a7";
+    auto value = uint256_t(543210987654321);
+    auto valueData = store(value);
+    auto key = parse_hex("4f96ed80e9a7555a6f74b3d658afdd9c756b0a40d4ca30c42c2039eb449bb904");
+
+    Proto::SigningInput input;
+    input.set_chain_id(chainId.data(), chainId.size());
+    input.set_nonce(nonce.data(), nonce.size());
+    input.set_gas_limit(gasLimit.data(), gasLimit.size());
+    input.set_max_inclusion_fee_per_gas(maxInclusionFeePerGas.data(), maxInclusionFeePerGas.size());
+    input.set_max_fee_per_gas(maxFeePerGas.data(), maxFeePerGas.size());
+    input.set_to_address(toAddress);
+    input.set_private_key(key.data(), key.size());
+    auto& transfer = *input.mutable_transaction()->mutable_transfer();
+    transfer.set_amount(valueData.data(), valueData.size());
+    transfer.set_data(Data().data(), 0);
+
+    // https://ropsten.etherscan.io/tx/0x14429509307efebfdaa05227d84c147450d168c68539351fbc01ed87c916ab2e
+    std::string expected = "02f8710306847735940084b2d05e0082526c94b9f5771c27664bf2282d98e09d7f50cec7cb01a78701ee0c29f50cb180c080a092c336138f7d0231fe9422bb30ee9ef10bf222761fe9e04442e3a11e88880c64a06487026011dae03dc281bc21c7d7ede5c2226d197befb813a4ecad686b559e58";
+
+    // sign test
+    Proto::SigningOutput output;
+    ANY_SIGN(input, TWCoinTypeEthereum);
+
+    EXPECT_EQ(hex(output.encoded()), expected);
+    EXPECT_EQ(hex(output.v()), "00");
+    EXPECT_EQ(hex(output.r()), "92c336138f7d0231fe9422bb30ee9ef10bf222761fe9e04442e3a11e88880c64");
+    EXPECT_EQ(hex(output.s()), "6487026011dae03dc281bc21c7d7ede5c2226d197befb813a4ecad686b559e58");
+    EXPECT_EQ(hex(output.data()), "");
+}
+
+TEST(TWAnySignerEthereum, SignERC20Transfer_1559) {
+    auto chainId = store(uint256_t(1));
+    auto nonce = store(uint256_t(0));
+    auto gasLimit = store(uint256_t(78009)); // 130B9
+    auto maxInclusionFeePerGas = store(uint256_t(2000000000)); // 77359400
+    auto maxFeePerGas = store(uint256_t(3000000000)); // B2D05E00
+    auto toAddress = "0x5322b34c88ed0691971bf52a7047448f0f4efc84";
+    auto token = "0x6b175474e89094c44da98b954eedeac495271d0f"; // DAI
+    auto amount = uint256_t(2000000000000000000);
+    auto amountData = store(amount);
+    auto key = parse_hex("0x608dcb1742bb3fb7aec002074e3420e4fab7d00cced79ccdac53ed5b27138151");
+
+    Proto::SigningInput input;
+    input.set_chain_id(chainId.data(), chainId.size());
+    input.set_nonce(nonce.data(), nonce.size());
+    input.set_gas_limit(gasLimit.data(), gasLimit.size());
+    input.set_max_inclusion_fee_per_gas(maxInclusionFeePerGas.data(), maxInclusionFeePerGas.size());
+    input.set_max_fee_per_gas(maxFeePerGas.data(), maxFeePerGas.size());
+    input.set_to_address(token);
+    input.set_private_key(key.data(), key.size());
+    auto& erc20 = *input.mutable_transaction()->mutable_erc20_transfer();
+    erc20.set_to(toAddress);
+    erc20.set_amount(amountData.data(), amountData.size());
+
+    // sign test
+    Proto::SigningOutput output;
+    ANY_SIGN(input, TWCoinTypeEthereum);
+
+    ASSERT_EQ(hex(output.encoded()), "02f8b00180847735940084b2d05e00830130b9946b175474e89094c44da98b954eedeac495271d0f80b844a9059cbb0000000000000000000000005322b34c88ed0691971bf52a7047448f0f4efc840000000000000000000000000000000000000000000000001bc16d674ec80000c080a0adfcfdf98d4ed35a8967a0c1d78b42adb7c5d831cf5a3272654ec8f8bcd7be2ea011641e065684f6aa476f4fd250aa46cd0b44eccdb0a6e1650d658d1998684cdf");
+}
+
+TEST(TWAnySignerEthereum, SignERC20Approve_1559) {
+    auto chainId = store(uint256_t(1));
+    auto nonce = store(uint256_t(0));
+    auto gasLimit = store(uint256_t(78009)); // 130B9
+    auto maxInclusionFeePerGas = store(uint256_t(2000000000));
+    auto maxFeePerGas = store(uint256_t(3000000000));
+    auto spenderAddress = "0x5322b34c88ed0691971bf52a7047448f0f4efc84";
+    auto token = "0x6b175474e89094c44da98b954eedeac495271d0f"; // DAI
+    auto amount = store(uint256_t(2000000000000000000));
+    auto key = parse_hex("0x608dcb1742bb3fb7aec002074e3420e4fab7d00cced79ccdac53ed5b27138151");
+
+    Proto::SigningInput input;
+    input.set_chain_id(chainId.data(), chainId.size());
+    input.set_nonce(nonce.data(), nonce.size());
+    input.set_gas_limit(gasLimit.data(), gasLimit.size());
+    input.set_max_inclusion_fee_per_gas(maxInclusionFeePerGas.data(), maxInclusionFeePerGas.size());
+    input.set_max_fee_per_gas(maxFeePerGas.data(), maxFeePerGas.size());
+    input.set_to_address(token);
+    input.set_private_key(key.data(), key.size());
+    auto& erc20 = *input.mutable_transaction()->mutable_erc20_approve();
+    erc20.set_spender(spenderAddress);
+    erc20.set_amount(amount.data(), amount.size());
+
+    // sign test
+    Proto::SigningOutput output;
+    ANY_SIGN(input, TWCoinTypeEthereum);
+
+    ASSERT_EQ(hex(output.encoded()), "02f8b00180847735940084b2d05e00830130b9946b175474e89094c44da98b954eedeac495271d0f80b844095ea7b30000000000000000000000005322b34c88ed0691971bf52a7047448f0f4efc840000000000000000000000000000000000000000000000001bc16d674ec80000c080a05a43dda3dc193480ee532a5ed67ba8fbd2e3afb9eee218f4fb955b415d592925a01300e5b5f51c8cd5bf80f018cea3fb347fae589e65355068ac44ffc996313c60");
+}
+
+TEST(TWAnySignerEthereum, SignERC721Transfer_1559) {
+    auto chainId = store(uint256_t(1));
+    auto nonce = store(uint256_t(0));
+    auto gasLimit = store(uint256_t(78009));
+    auto maxInclusionFeePerGas = store(uint256_t(2000000000));
+    auto maxFeePerGas = store(uint256_t(3000000000));
+    auto tokenContract = "0x4e45e92ed38f885d39a733c14f1817217a89d425";
+    auto fromAddress = "0x718046867b5b1782379a14eA4fc0c9b724DA94Fc";
+    auto toAddress = "0x5322b34c88ed0691971bf52a7047448f0f4efc84";
+    auto tokenId = parse_hex("23c47ee5");
+    auto key = parse_hex("0x608dcb1742bb3fb7aec002074e3420e4fab7d00cced79ccdac53ed5b27138151");
+
+    Proto::SigningInput input;
+    input.set_chain_id(chainId.data(), chainId.size());
+    input.set_nonce(nonce.data(), nonce.size());
+    input.set_gas_limit(gasLimit.data(), gasLimit.size());
+    input.set_max_inclusion_fee_per_gas(maxInclusionFeePerGas.data(), maxInclusionFeePerGas.size());
+    input.set_max_fee_per_gas(maxFeePerGas.data(), maxFeePerGas.size());
+    input.set_to_address(tokenContract);
+    input.set_private_key(key.data(), key.size());
+    auto& erc721 = *input.mutable_transaction()->mutable_erc721_transfer();
+    erc721.set_from(fromAddress);
+    erc721.set_to(toAddress);
+    erc721.set_token_id(tokenId.data(), tokenId.size());
+
+    // sign test
+    Proto::SigningOutput output;
+    ANY_SIGN(input, TWCoinTypeEthereum);
+
+    ASSERT_EQ(hex(output.encoded()), "02f8d00180847735940084b2d05e00830130b9944e45e92ed38f885d39a733c14f1817217a89d42580b86423b872dd000000000000000000000000718046867b5b1782379a14ea4fc0c9b724da94fc0000000000000000000000005322b34c88ed0691971bf52a7047448f0f4efc840000000000000000000000000000000000000000000000000000000023c47ee5c080a0dbd591d1eac39bad62d7c158d5e1d55e7014d2218998f8980462e2f283f42d4aa05acadb904484a0fb5526a4c64b8addb8aac4f6548f90199e40eb787b79faed4a");
+}
+
+TEST(TWAnySignerEthereum, SignERC1155Transfer_1559) {
+    auto chainId = store(uint256_t(1));
+    auto nonce = store(uint256_t(0));
+    auto gasLimit = store(uint256_t(78009));
+    auto maxInclusionFeePerGas = store(uint256_t(2000000000));
+    auto maxFeePerGas = store(uint256_t(3000000000));
+    auto tokenContract = "0x4e45e92ed38f885d39a733c14f1817217a89d425";
+    auto fromAddress = "0x718046867b5b1782379a14eA4fc0c9b724DA94Fc";
+    auto toAddress = "0x5322b34c88ed0691971bf52a7047448f0f4efc84";
+    auto tokenId = parse_hex("23c47ee5");
+    auto value = uint256_t(2000000000000000000);
+    auto valueData = store(value);
+    auto data = parse_hex("01020304");
+    auto key = parse_hex("0x608dcb1742bb3fb7aec002074e3420e4fab7d00cced79ccdac53ed5b27138151");
+
+    Proto::SigningInput input;
+    input.set_chain_id(chainId.data(), chainId.size());
+    input.set_nonce(nonce.data(), nonce.size());
+    input.set_gas_limit(gasLimit.data(), gasLimit.size());
+    input.set_max_inclusion_fee_per_gas(maxInclusionFeePerGas.data(), maxInclusionFeePerGas.size());
+    input.set_max_fee_per_gas(maxFeePerGas.data(), maxFeePerGas.size());
+    input.set_to_address(tokenContract);
+    input.set_private_key(key.data(), key.size());
+    auto& erc1155 = *input.mutable_transaction()->mutable_erc1155_transfer();
+    erc1155.set_from(fromAddress);
+    erc1155.set_to(toAddress);
+    erc1155.set_token_id(tokenId.data(), tokenId.size());
+    erc1155.set_value(valueData.data(), valueData.size());
+    erc1155.set_data(data.data(), data.size());
+
+    // sign test
+    Proto::SigningOutput output;
+    ANY_SIGN(input, TWCoinTypeEthereum);
+
+    ASSERT_EQ(hex(output.encoded()), "02f901500180847735940084b2d05e00830130b9944e45e92ed38f885d39a733c14f1817217a89d42580b8e4f242432a000000000000000000000000718046867b5b1782379a14ea4fc0c9b724da94fc0000000000000000000000005322b34c88ed0691971bf52a7047448f0f4efc840000000000000000000000000000000000000000000000000000000023c47ee50000000000000000000000000000000000000000000000001bc16d674ec8000000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000040102030400000000000000000000000000000000000000000000000000000000c080a0533df41dda5540c57257b7fe89c29cefff0155c333e063220df2bf9680fcc15aa036a844fd20de5a51de96ceaaf078558e87d86426a4a5d4b215ee1fd0fa397f8a");
+}

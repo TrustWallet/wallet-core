@@ -37,18 +37,20 @@ class Signer {
 
   public:
     /// build Transaction from signing input
-    static std::shared_ptr<TransactionBase> build(const Proto::SigningInput& input) { return buildNonTyped(input); }
-    static std::shared_ptr<TransactionNonTyped> buildNonTyped(const Proto::SigningInput& input);
+    static std::shared_ptr<TransactionBase> build(const Proto::SigningInput& input);
 
     /// Signs a hash with the given private key for the given chain identifier.
     ///
     /// @returns the r, s, and v values of the transaction signature
-    static Signature sign(const PrivateKey& privateKey, const uint256_t& chainID, const Data& hash) noexcept;
+    static Signature sign(const PrivateKey& privateKey, const Data& hash, bool includeEip155, const uint256_t& chainID) noexcept;
 
-    /// R, S, and V values for the given chain identifier and signature.
-    ///
+    /// Break up the signature into the R, S, and V values.
     /// @returns the r, s, and v values of the transaction signature
-    static Signature valuesRSV(const uint256_t& chainID, const Data& signature) noexcept;
+    static Signature signatureDataToStruct(const Data& signature) noexcept;
+
+    /// Break up the signature into the R, S, and V values, and include chainID in V for replay protection (Eip155)
+    /// @returns the r, s, and v values of the transaction signature
+    static Signature signatureDataToStructWithEip155(const uint256_t& chainID, const Data& signature) noexcept;
 };
 
 } // namespace TW::Ethereum

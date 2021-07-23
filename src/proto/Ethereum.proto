@@ -75,6 +75,9 @@ message Transaction {
 }
 
 // Input data necessary to create a signed transaction.
+// Supported:
+// - Legacy transaction, with legacy fee (pre-EIP1559; gas price, gas limit)
+// - EIP1559 fee (transaction type: ?; max inclusion fee, max fee per gas)
 message SigningInput {
     // Chain identifier (256-bit number)
     bytes chain_id = 1;
@@ -83,10 +86,19 @@ message SigningInput {
     bytes nonce = 2;
 
     // Gas price (256-bit number)
+    // If > 0, legacy fee scheme is used; if 0, EIP1559 fee scheme is used
     bytes gas_price = 3;
 
     // Gas limit (256-bit number)
     bytes gas_limit = 4;
+
+    // Maxinmum optional inclusion fee (aka tip) (256-bit number)
+    // Used only for EIP1559 fee, disregarded for legacy
+    bytes max_inclusion_fee_per_gas = 8;
+
+    // Maxinmum fee (256-bit number)
+    // Used only for EIP1559 fee, disregarded for legacy
+    bytes max_fee_per_gas = 9;
 
     // Recipient's address.
     string to_address = 5;
